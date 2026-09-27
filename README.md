@@ -2,6 +2,8 @@
 
 Sanity Studio plugin that adds a **Live links** accordion to document forms (styled like Presentation locations). Editors get per-locale URLs plus **Open all** and **Copy all**.
 
+![Live links panel in Sanity Studio — per-locale URLs with Open all and Copy all](./screenshot-example.png)
+
 Works with **Sanity Studio v5 and v6**.
 
 ## Install

@@ -16,6 +16,7 @@
 	"files": [
 		"dist",
 		"README.md",
+		"screenshot-example.png",
 		"LICENSE"
 	],
 	"scripts": {
