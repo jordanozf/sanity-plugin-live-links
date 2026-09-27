@@ -1,0 +1,45 @@
+{
+	"name": "sanity-plugin-live-links",
+	"version": "0.1.0",
+	"description": "Sanity Studio panel for opening and copying localized live site URLs",
+	"license": "MIT",
+	"type": "module",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"import": "./src/index.ts",
+			"default": "./src/index.ts"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src",
+		"README.md"
+	],
+	"scripts": {
+		"typecheck": "tsc --noEmit"
+	},
+	"peerDependencies": {
+		"@sanity/icons": "^5.2.0",
+		"@sanity/ui": "^4.2.0",
+		"react": "^18 || ^19",
+		"sanity": "^6.0.0"
+	},
+	"devDependencies": {
+		"@sanity/icons": "^5.2.2",
+		"@sanity/ui": "^4.2.6",
+		"@types/react": "^19.3.0",
+		"react": "^19.3.0",
+		"sanity": "^6.16.0",
+		"typescript": "^7.0.2"
+	},
+	"keywords": [
+		"sanity",
+		"sanity-plugin",
+		"studio",
+		"i18n",
+		"localization"
+	]
+}
