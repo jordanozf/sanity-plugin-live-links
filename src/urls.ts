@@ -1,4 +1,5 @@
-import type { LiveLinkLocale, LiveLinksPluginConfig, LiveSiteUrlHelpers } from './types';
+import { resolveLiveSiteBaseUrl } from './env';
+import type { LiveLinksPluginConfig, LiveSiteUrlHelpers } from './types';
 
 function parseOrigin(baseUrl: string) {
 	const raw = baseUrl.trim();
@@ -13,7 +14,7 @@ function parseOrigin(baseUrl: string) {
 export function createLiveSiteUrlHelpers(
 	config: Pick<LiveLinksPluginConfig, 'baseUrl' | 'locales'>
 ): LiveSiteUrlHelpers {
-	const origin = parseOrigin(config.baseUrl);
+	const origin = parseOrigin(resolveLiveSiteBaseUrl(config.baseUrl));
 	const localeById = new Map(config.locales.map((locale) => [locale.id, locale]));
 
 	function liveSiteUrl(localeId: string, path: string) {

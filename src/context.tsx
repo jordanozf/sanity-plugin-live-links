@@ -1,13 +1,13 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import type { LiveLinksPluginConfig } from './types';
+import type { ResolvedLiveLinksPluginConfig } from './types';
 
-const LiveLinksConfigContext = createContext<LiveLinksPluginConfig | null>(null);
+const LiveLinksConfigContext = createContext<ResolvedLiveLinksPluginConfig | null>(null);
 
 export function LiveLinksConfigProvider({
 	config,
 	children
 }: {
-	config: LiveLinksPluginConfig;
+	config: ResolvedLiveLinksPluginConfig;
 	children: ReactNode;
 }) {
 	return (

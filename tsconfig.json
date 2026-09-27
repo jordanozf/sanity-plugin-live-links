@@ -1,14 +1,14 @@
 {
+	"extends": "@sanity/tsconfig/strictest",
 	"compilerOptions": {
-		"target": "ES2022",
+		"rootDir": ".",
+		"jsx": "preserve",
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
-		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"jsx": "react-jsx",
-		"strict": true,
-		"skipLibCheck": true,
 		"noEmit": true,
-		"isolatedModules": true
+		"types": ["node"],
+		"noPropertyAccessFromIndexSignature": false
 	},
-	"include": ["src"]
+	"include": ["src", "package.config.ts"],
+	"exclude": ["dist", "node_modules"]
 }

@@ -1,110 +1,127 @@
 # sanity-plugin-live-links
 
-Sanity Studio plugin that adds a **Live links** accordion to document forms — matching Presentation location styling — with per-locale URLs, **Open all**, and **Copy all**.
+Sanity Studio plugin that adds a **Live links** accordion to document forms (styled like Presentation locations). Editors get per-locale URLs plus **Open all** and **Copy all**.
+
+Works with **Sanity Studio v5 and v6**.
 
 ## Install
 
+In your Studio project:
+
 ```bash
 npm install sanity-plugin-live-links
-# peer deps: sanity, @sanity/ui, @sanity/icons, react
 ```
 
-## Usage
+Also supported: `pnpm add sanity-plugin-live-links` · `yarn add sanity-plugin-live-links`
+
+## Site URL (automatic per environment)
+
+The plugin reads the public site origin from Sanity environment variables — no hardcoded production URL in config.
+
+Set **`SANITY_STUDIO_SITE_URL`** in env files for each context (Sanity loads these when you run or deploy Studio):
+
+```bash
+# .env.development
+SANITY_STUDIO_SITE_URL=http://localhost:3000
+
+# .env.staging
+SANITY_STUDIO_SITE_URL=https://staging.example.com
+
+# .env.production
+SANITY_STUDIO_SITE_URL=https://www.example.com
+```
+
+Build or deploy with the matching env (for example `sanity build` uses `.env.production`; `SANITY_ACTIVE_ENV=staging sanity build` uses `.env.staging`).
+
+If `SANITY_STUDIO_SITE_URL` is not set, the plugin falls back to **`SANITY_STUDIO_PREVIEW_URL`** (the same variable often used for the Presentation tool).
+
+Optional: pass **`baseUrl`** in plugin config to override env for all environments.
+
+## Setup
+
+Add the plugin to `sanity.config.ts` (or `.js`). Each document type is configured **once** under `documents` (use your own `_type` names — `home` / `page` below are just an example):
 
 ```typescript
 import { defineConfig } from 'sanity';
-import { liveLinksPlugin, createLiveSiteUrlHelpers } from 'sanity-plugin-live-links';
+import { liveLinksPlugin } from 'sanity-plugin-live-links';
 
-const siteUrl = 'https://www.example.com';
+const liveLinksOptions = {
+  locales: [
+    { id: 'en', localizePath: (path) => path },
+    { id: 'fr', localizePath: (path) => (path === '/' ? '/fr' : `/fr${path}`) }
+  ],
+  documents: {
+    home: {
+      path: '/',
+      title: 'Home'
+    },
+    page: {
+      requiresSlug: true,
+      path: ({ slug }) => (slug?.trim() ? `/${slug.trim()}` : null),
+      title: 'Page',
+      resolveTitle: ({ titleValue }) =>
+        typeof titleValue === 'string' && titleValue.trim() ? titleValue.trim() : 'Page'
+    }
+  }
+};
 
 export default defineConfig({
   // ...
-  plugins: [
-    liveLinksPlugin({
-      baseUrl: siteUrl,
-      documentTypes: ['page', 'home'],
-      requiresSlug: ['page'],
-      locales: [
-        { id: 'en', localizePath: (path) => path },
-        { id: 'fr', localizePath: (path) => (path === '/' ? '/fr' : `/fr${path}`) },
-        { id: 'it', localizePath: (path) => (path === '/' ? '/it' : `/it${path}`) }
-      ],
-      resolvePath: ({ documentType, slug }) => {
-        if (documentType === 'home') return '/';
-        if (documentType === 'page' && slug?.trim()) return `/${slug.trim()}`;
-        return null;
-      },
-      resolveTitle: ({ titleValue, documentType }) => {
-        // optional: parse intl arrays, plain strings, etc.
-        if (typeof titleValue === 'string' && titleValue.trim()) return titleValue.trim();
-        return documentType === 'home' ? 'Home' : 'Page';
-      }
-    })
-  ]
+  plugins: [liveLinksPlugin(liveLinksOptions)]
 });
 ```
 
-**Embedded Studio** (e.g. `@sanity/sveltekit`): if the panel does not show when the plugin is only in `plugins`, spread the form config on the workspace instead:
+Open a document whose `_type` is a key in `documents`. The panel appears when `path` resolves; types with `requiresSlug: true` show `—` until the slug is filled in.
+
+## Embedded Studio
+
+If you embed Studio in another app (for example SvelteKit) and the panel does not show, spread the form config on the workspace:
 
 ```typescript
 import { liveLinksFormConfig, liveLinksPlugin } from 'sanity-plugin-live-links';
 
-const liveLinks = { /* same options as above */ };
-
 export default defineConfig({
-  plugins: [liveLinksPlugin(liveLinks)],
-  ...liveLinksFormConfig(liveLinks)
+  plugins: [liveLinksPlugin(liveLinksOptions)],
+  ...liveLinksFormConfig(liveLinksOptions)
 });
 ```
 
-### Presentation `defineLocations`
+## Presentation tool
 
-Reuse the same URL builder for Sanity Presentation:
+Use the same URL rules in Presentation (site origin still comes from env):
 
 ```typescript
 import { createLiveSiteUrlHelpers } from 'sanity-plugin-live-links';
 
-const { liveSiteUrl } = createLiveSiteUrlHelpers({
-  baseUrl: siteUrl,
-  locales: [/* same as plugin */]
+const { liveSiteUrl, liveSiteLinksForPath } = createLiveSiteUrlHelpers({
+  locales: liveLinksOptions.locales
 });
 
-// href: liveSiteUrl('fr', '/about')
+// liveSiteUrl('fr', '/about')
+// liveSiteLinksForPath('/about')
 ```
 
 ## Options
 
-| Option | Description |
-|--------|-------------|
-| `baseUrl` | Public site URL (origin used for absolute links) |
-| `documentTypes` | Schema types that show the panel |
-| `locales` | `{ id, localizePath(path) }` for each language |
-| `resolvePath` | Returns locale-neutral path (`/`, `/about`) or `null` |
-| `resolveTitle` | Optional title from form values |
-| `slugPath` | Form path to slug (default `['slug', 'current']`) |
-| `titlePath` | Form path to title (default `['title']`) |
-| `requiresSlug` | Types that show `—` when slug is empty |
-| `panelTitle` | Accordion label (default `Live links`) |
+| Option | Required | Description |
+|--------|----------|-------------|
+| `documents` | yes | Map of `_type` → settings (`path`, optional `requiresSlug`, `title`, paths, etc.) |
+| `locales` | yes | One entry per language (`id` + `localizePath`). Example uses EN and FR — change to match your site |
+| `baseUrl` | no | Override site origin; default is `SANITY_STUDIO_SITE_URL` then `SANITY_STUDIO_PREVIEW_URL` |
+| `slugPath` | no | Default slug field path (default `['slug', 'current']`) |
+| `titlePath` | no | Default title field path (default `['title']`) |
+| `resolveTitle` | no | Default title resolver for all types (overridable per type) |
+| `panelTitle` | no | Accordion title (default `Live links`) |
 
-## Development in this monorepo
+### Per document (`documents[type]`)
 
-CESDA links the package via pnpm workspace (`packages/sanity-plugin-live-links` → `sanity-plugin-live-links: workspace:*`).
-
-## Own repository
-
-To publish or develop the plugin separately:
-
-1. Copy `packages/sanity-plugin-live-links/` to a new git repo (include `src/`, `package.json`, `tsconfig.json`, `README.md`, `LICENSE`).
-2. Run `pnpm install` (or `npm install`) in that repo.
-3. Publish with `npm publish --access public` when ready.
-
-In consuming projects, install from npm instead of workspace:
-
-```bash
-pnpm add sanity-plugin-live-links
-```
-
-The plugin ships TypeScript source in `exports` (no build step required for Vite-based Sanity Studio). Add a `dist` build later if you need CommonJS or stricter npm packaging.
+| Field | Description |
+|-------|-------------|
+| `path` | Fixed path string (e.g. `'/'`) or `(context) => string \| null` |
+| `requiresSlug` | Show `—` until slug is present |
+| `title` | Fallback label in the panel |
+| `slugPath` / `titlePath` | Override defaults for this type only |
+| `resolveTitle` | Override global `resolveTitle` for this type |
 
 ## License
 

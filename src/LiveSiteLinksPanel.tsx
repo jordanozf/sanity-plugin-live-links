@@ -58,8 +58,8 @@ type LiveSiteLinksPanelProps = {
 
 export function LiveSiteLinksPanel({ documentType }: LiveSiteLinksPanelProps) {
 	const config = useLiveLinksConfig();
-	const slugPath = config.slugPath ?? ['slug', 'current'];
-	const titlePath = config.titlePath ?? ['title'];
+	const slugPath = config.slugPathFor(documentType);
+	const titlePath = config.titlePathFor(documentType);
 	const slug = useFormValue(slugPath) as string | undefined;
 	const titleValue = useFormValue(titlePath);
 	const [expanded, setExpanded] = useState(false);
@@ -73,18 +73,20 @@ export function LiveSiteLinksPanel({ documentType }: LiveSiteLinksPanelProps) {
 
 	const pathBase = useMemo(() => config.resolvePath(pathContext), [config, pathContext]);
 
-	const { liveSiteLinksForPath } = useMemo(
+	const { liveSiteLinksForPath, siteOrigin } = useMemo(
 		() => createLiveSiteUrlHelpers(config),
 		[config]
 	);
 
+	const missingSiteUrl = !siteOrigin();
+
 	const links = useMemo(() => {
 		if (!pathBase) return [];
 		return liveSiteLinksForPath(pathBase).map(({ locale, url }) => {
-			const title = config.resolveTitle?.({
+			const title = config.resolveTitleFor({
 				...pathContext,
 				titleValue
-			}) ?? documentType;
+			});
 			return {
 				locale,
 				url,
@@ -145,9 +147,9 @@ export function LiveSiteLinksPanel({ documentType }: LiveSiteLinksPanelProps) {
 		}
 	}, [links]);
 
-	const requiresSlug = config.requiresSlug?.includes(documentType) ?? false;
+	const requiresSlug = config.requiresSlug(documentType);
 	const missingSlug = requiresSlug && !slug?.trim();
-	const hasLinks = links.length > 0;
+	const hasLinks = links.length > 0 && !missingSiteUrl;
 	const panelTitle = config.panelTitle ?? 'Live links';
 	const summary = hasLinks ? `${panelTitle} (${links.length})` : panelTitle;
 
@@ -206,7 +208,14 @@ export function LiveSiteLinksPanel({ documentType }: LiveSiteLinksPanelProps) {
 						</Flex>
 
 						<Stack hidden={!expanded} marginTop={1} gap={1}>
-							{missingSlug ? (
+							{missingSiteUrl ? (
+								<Card padding={3} radius={1} tone="caution">
+									<Text size={1}>
+										Set <code>SANITY_STUDIO_SITE_URL</code> in your Studio <code>.env</code> file
+										for this environment (or pass <code>baseUrl</code> in the plugin config).
+									</Text>
+								</Card>
+							) : missingSlug ? (
 								<Card padding={3} radius={1} tone="inherit">
 									<Text size={1} muted>
 										—
